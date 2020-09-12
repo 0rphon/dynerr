@@ -6,7 +6,7 @@ pub type DynResult<T> = Result<T, Box<dyn error::Error>>;
 ///a macro for returning custom errors
 #[macro_export]
 macro_rules! err {
-    ($x: expr) => {Err(Box::new($x))};
+    ($x: expr) => {return Err(Box::new($x))};
 }
 
 ///logs message to event.log
