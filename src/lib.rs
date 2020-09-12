@@ -1,7 +1,4 @@
-pub use std::{error, fmt};
-pub use std::fs::File;
-pub use std::io::prelude::*;
-pub use std::path::Path;
+use std::error;
 
 ///an alias for result that impls dynamic errors
 pub type DynResult<T> = Result<T, Box<dyn error::Error>>;
@@ -17,6 +14,10 @@ macro_rules! err {
 macro_rules! log {
     ($event: expr) => {
         {
+            use std::fmt;
+            use std::fs::File;
+            use std::io::prelude::*;
+            use std::path::Path;
             const ERROR_LOG: &str = "event.log";
             fn log_event<T: fmt::Display>(event: T) -> T {
                 let mut file = File::open(ERROR_LOG)
@@ -62,6 +63,7 @@ macro_rules! logged_panic {
 
 #[test]
 pub fn example() {
+    use std::{fmt, error};
     ///a custom error type
     #[derive(Debug)]
     enum ExampleError {
