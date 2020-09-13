@@ -5,10 +5,10 @@ pub type DynResult<T> = std::result::Result<T, Box<dyn std::error::Error>>;
 /// 
 /// #Example
 /// ```ignore
-/// if x > 3 {err!(MyError::CustomError("x less than 3"))}
+/// if x > 3 {dynerr!(MyError::CustomError("x less than 3"))}
 /// ```
 #[macro_export]
-macro_rules! err {
+macro_rules! dynerr {
     ($e:expr) => {return Err(Box::new($e))};
 }
 
@@ -19,11 +19,11 @@ macro_rules! err {
 /// #Example
 /// ```ignore
 /// ...
-/// match example(9) {
+/// match example(9) {  //returns DynResult
 ///     Ok(_) => Ok(()),
 ///     Err(e) => {
-///         dyn_match!(e, //the DynError to match
-///             type ExampleError1: ExampleError1::ThisError(2) => panic!("it was 2!"), //match arms to test against
+///         dynmatch!(e, //the DynError to match
+///             type ExampleError1: ExampleError1::ThisError(2) => panic!("it was 2!"), //match arms to match against
 ///             type ExampleError2: ExampleError2::ThatError(8) => panic!("it was 8!"), //type T: pattern => {code}
 ///             type ExampleError2: ExampleError2::ThatError(9) => println!("it was 9!"),
 ///             default i => panic!("{}", i)    //the final arm if none of the above match
@@ -34,7 +34,7 @@ macro_rules! err {
 /// ...
 /// ```
 #[macro_export]
-macro_rules! dynerr {
+macro_rules! dynmatch {
     ($e:expr, $(type $ty:ty: $pat:pat => $result:expr),*, default $d:ident => $default:expr) => (
         {
             let mut matched = false;
@@ -155,8 +155,8 @@ pub fn example() -> DynResult<()> {
     fn example(x: u32) -> DynResult<u32> {
         match x {
             1      => Ok(x),                                //Ok
-            2..=4  => err!(ExampleError1::ThisError(x)),    //custom error
-            5..=10 => err!(ExampleError2::ThatError(x)),    //different custom error
+            2..=4  => dynerr!(ExampleError1::ThisError(x)), //custom error
+            5..=10 => dynerr!(ExampleError2::ThatError(x)), //different custom error
             _      => {     
                 std::env::current_dir()?;                   //an error not even defined by you!
                 Ok(x)
@@ -168,7 +168,7 @@ pub fn example() -> DynResult<()> {
     match example(9) {
         Ok(_) => Ok(()),
         Err(e) => {
-            dynerr!(e, 
+            dynmatch!(e, 
                 type ExampleError1: ExampleError1::ThisError(2) => panic!("it was 2!"),
                 type ExampleError2: ExampleError2::ThatError(8) => panic!("it was 8!"),
                 type ExampleError2: ExampleError2::ThatError(9) => println!("it was 9!"),
