@@ -1,8 +1,5 @@
-use std::error;
-
 ///an alias for result that uses dynamic errors
-pub type DynResult<T> = std::result::Result<T, Box<dyn error::Error>>;
-
+pub type DynResult<T> = std::result::Result<T, Box<dyn std::error::Error>>;
 
 /// a macro for returning custom errors as dynamic errors
 /// 
@@ -13,6 +10,42 @@ pub type DynResult<T> = std::result::Result<T, Box<dyn error::Error>>;
 #[macro_export]
 macro_rules! err {
     ($e:expr) => {return Err(Box::new($e))};
+}
+
+/// performs a dynamic match operation on multiple error types\
+/// takes the DynError, match arms, and default arm\
+/// types must be specified beforehand with the "type" keyword
+/// 
+/// #Example
+/// ```ignore
+/// ...
+/// match example(9) {
+///     Ok(_) => Ok(()),
+///     Err(e) => {
+///         dyn_match!(e, //the DynError to match
+///             type ExampleError1: ExampleError1::ThisError(2) => panic!("it was 2!"), //match arms to test against
+///             type ExampleError2: ExampleError2::ThatError(8) => panic!("it was 8!"), //type T: pattern => {code}
+///             type ExampleError2: ExampleError2::ThatError(9) => println!("it was 9!"),
+///             default i => panic!("{}", i)    //the final arm if none of the above match
+///         );
+///         Ok(())
+///     }
+/// }
+/// ...
+/// ```
+#[macro_export]
+macro_rules! dynerr {
+    ($e:expr, $(type $ty:ty: $pat:pat => $result:expr),*, default $d:ident => $default:expr) => (
+        {
+            let mut matched = false;
+            $(
+                if let Some(e) = $e.downcast_ref::<$ty>() {
+                    if let $pat = e {$result; matched = true} //don't listen to the linter this is 100% reachable. #[allow(dead_code)] doesnt work on it either...weird bug
+                }
+            )*
+            if !matched {match $e {$d => $default}}
+        }
+    );
 }
 
 /// logs message to event.log
@@ -59,7 +92,7 @@ macro_rules! log {
     };
 }
 
-/// logs error to event.log then panics\
+/// logs error to event.log then panic!\
 /// 
 /// #Example
 /// ```ignore
@@ -72,42 +105,6 @@ macro_rules! logged_panic {
             panic!("{}",log!($e));
         }
     };
-}
-
-/// performs a dynamic match operation on multiple types\
-/// takes the DynError, match arms, and default arm\
-/// types must be specified beforehand with the "type" keyword
-/// 
-/// #Example
-/// ```ignore
-/// ...
-/// match example(9) {
-///     Ok(_) => Ok(()),
-///     Err(e) => {
-///         dyn_match!(e, //the DynError to match
-///             type ExampleError1: ExampleError1::ThisError(2) => panic!("it was 2!"), //match arms to test against
-///             type ExampleError2: ExampleError2::ThatError(8) => panic!("it was 8!"), //type T: pattern => {code}
-///             type ExampleError2: ExampleError2::ThatError(9) => println!("it was 9!"),
-///             default i => panic!("{}", i)    //the final arm if none of the above match
-///         );
-///         Ok(())
-///     }
-/// }
-/// ...
-/// ```
-#[macro_export]
-macro_rules! dynerr {
-    ($e:expr, $(type $ty:ty: $pat:pat => $result:expr),*, default $d:ident => $default:expr) => (
-        {
-            let mut matched = false;
-            $(
-                if let Some(e) = $e.downcast_ref::<$ty>() {
-                    if let $pat = e {$result; matched = true} //don't listen to the linter this is 100% reachable. #[allow(dead_code)] doesnt work on it either...weird bug
-                }
-            )*
-            if !matched {match $e {$d => $default}}
-        }
-    );
 }
 
 
