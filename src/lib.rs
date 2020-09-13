@@ -19,31 +19,40 @@ macro_rules! dynerr {
 /// #Example
 /// ```ignore
 /// ...
-/// match example(9) {  //returns DynResult
-///     Ok(_) => Ok(()),
+/// let i = match example(9) { //returns dyn error
+///     Ok(i) => i,
 ///     Err(e) => {
-///         dynmatch!(e, //the DynError to match
-///             type ExampleError1: ExampleError1::ThisError(2) => panic!("it was 2!"), //match arms to match against
-///             type ExampleError2: ExampleError2::ThatError(8) => panic!("it was 8!"), //type T: pattern => {code}
-///             type ExampleError2: ExampleError2::ThatError(9) => println!("it was 9!"),
-///             default i => panic!("{}", i)    //the final arm if none of the above match
-///         );
-///         Ok(())
+///         dynmatch!(e,                                                    //the error to match
+///             type ExampleError1 {                                        //error type group
+///                 arm ExampleError1::ThisError(2) => panic!("it was 2!"), //arm [pattern] => {code}
+///                 _ => panic!("{}",e)                                     //_ => {code}
+///             },
+///             type ExampleError2 {                                        //another error type
+///                 arm ExampleError2::ThatError(8) => panic!("it was 8!"), //more arms
+///                 arm ExampleError2::ThatError(9) => 9,
+///                 _ => panic!("{}",e)                                     //more wildcard matches
+///             }, 
+///             _ => panic!("{}",e)                                         //final wildcard if type not found
+///         )
 ///     }
-/// }
+/// };
 /// ...
 /// ```
 #[macro_export]
 macro_rules! dynmatch {
-    ($e:expr, $(type $ty:ty: $pat:pat => $result:expr),*, default $d:ident => $default:expr) => (
+    ($e:expr, $(type $ty:ty {$(arm $pat:pat => $result:expr),*, _ => $any:expr}),*, _ => $end:expr) => (
         {
-            let mut matched = false;
             $(
                 if let Some(e) = $e.downcast_ref::<$ty>() {
-                    if let $pat = e {$result; matched = true} //don't listen to the linter this is 100% reachable. #[allow(dead_code)] doesnt work on it either...weird bug
-                }
+                    match e {
+                        $(
+                            $pat => {$result}
+                        )*
+                        _ => $any
+                    }
+                } else
             )*
-            if !matched {match $e {$d => $default}}
+            {$end}
         }
     );
 }
@@ -165,16 +174,22 @@ pub fn example() -> DynResult<()> {
     }
 
     log!("this is a test");
-    match example(9) {
-        Ok(_) => Ok(()),
+    let _i = match example(9) {
+        Ok(i) => i,
         Err(e) => {
             dynmatch!(e, 
-                type ExampleError1: ExampleError1::ThisError(2) => panic!("it was 2!"),
-                type ExampleError2: ExampleError2::ThatError(8) => panic!("it was 8!"),
-                type ExampleError2: ExampleError2::ThatError(9) => println!("it was 9!"),
-                default i => panic!("{}", i)
-            );
-            Ok(())
+                type ExampleError1 {
+                    arm ExampleError1::ThisError(2) => panic!("it was 2!"),
+                    _ => panic!("{}",e)
+                },
+                type ExampleError2 {
+                    arm ExampleError2::ThatError(8) => panic!("it was 8!"),
+                    arm ExampleError2::ThatError(9) => 9,
+                    _ => panic!("{}",e)
+                }, 
+                _ => panic!("{}",e)
+            )
         }
-    }
+    };
+    Ok(())
 }
