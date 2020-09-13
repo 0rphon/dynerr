@@ -2,8 +2,8 @@
 some simple tools to help with dynamic error handling/logging\
 i got tired of copy pasting these from project to project so i made a crate\
 \
-the main features of this crate are the dynerr! and dynmatch! macros. when used alongside the return type DynResult<T> it allows you to return multiple error types then match for them!\
-using dynerr, theres no need to wrap errors.\
+the main features of this crate are the dynerr! and dynmatch! macros. when used alongside the return type DynResult\<T\> it allows you to return multiple error types then match for them!\
+using dynerr, theres no need to wrap errors.
 
 ```
 fn example(x: u32) -> DynResult<u32> {
