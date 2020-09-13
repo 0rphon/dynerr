@@ -118,9 +118,9 @@ macro_rules! logged_panic {
 
 
 
-
-#[test]
-pub fn example() -> DynResult<()> {
+#[cfg(test)]
+mod tests {
+    use super::*;
     //THIS SECTION IS CREATING THE FIRST CUSTOM ERROR
     use std::{fmt, error};
     ///a custom error type
@@ -140,12 +140,10 @@ pub fn example() -> DynResult<()> {
     impl error::Error for ExampleError1 {}
 
     //THIS SECTION IS CREATING THE SECOND CUSTOM ERROR
-    ///a custom error type
     #[derive(Debug)]
     enum ExampleError2 {
         ThatError(u32),
     }
-    //impl display formatting for error
     impl fmt::Display for ExampleError2 {
         fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
             match self {
@@ -153,43 +151,42 @@ pub fn example() -> DynResult<()> {
             }
         }
     }
-    //impl error conversion for error
     impl error::Error for ExampleError2 {}
 
-
-
     //THIS SECTION IS USING IT
-
-    //shows error handling capabilities using DynError
-    fn example(x: u32) -> DynResult<u32> {
-        match x {
-            1      => Ok(x),                                //Ok
-            2..=4  => dynerr!(ExampleError1::ThisError(x)), //custom error
-            5..=10 => dynerr!(ExampleError2::ThatError(x)), //different custom error
-            _      => {     
-                std::env::current_dir()?;                   //an error not even defined by you!
-                Ok(x)
+    #[test]
+    pub fn test() -> DynResult<()> {    
+        //shows error handling capabilities using DynError
+        fn example(x: u32) -> DynResult<u32> {
+            match x {
+                1      => Ok(x),                                //Ok
+                2..=4  => dynerr!(ExampleError1::ThisError(x)), //custom error
+                5..=10 => dynerr!(ExampleError2::ThatError(x)), //different custom error
+                _      => {     
+                    std::env::current_dir()?;                   //an error not even defined by you!
+                    Ok(x)
+                }
             }
         }
-    }
 
-    log!("this is a test");
-    let _i = match example(9) {
-        Ok(i) => i,
-        Err(e) => {
-            dynmatch!(e, 
-                type ExampleError1 {
-                    arm ExampleError1::ThisError(2) => panic!("it was 2!"),
-                    _ => panic!("{}",e)
-                },
-                type ExampleError2 {
-                    arm ExampleError2::ThatError(8) => panic!("it was 8!"),
-                    arm ExampleError2::ThatError(9) => 9,
-                    _ => panic!("{}",e)
-                }, 
-                _ => panic!("{}",e)
-            )
-        }
-    };
-    Ok(())
+        log!("this is a test");
+        let _i = match example(3) {
+            Ok(i) => i,
+            Err(e) => {
+                dynmatch!(e,                                                    //the dynamic error to be matched
+                    type ExampleError1 {                                        //an error group
+                        arm ExampleError1::ThisError(2) => panic!("it was 2!"), //arm [pattern] => {code}
+                        _ => panic!("{}",e)                                     //_ => {code}
+                    },
+                    type ExampleError2 {
+                        arm ExampleError2::ThatError(8) => panic!("it was 8!"),
+                        arm ExampleError2::ThatError(9) => 9,
+                        _ => panic!("{}",e)
+                    }, 
+                    _ => panic!("{}",e)                                         //what to do if error group isn't found
+                )
+            }
+        };
+        Ok(())
+    }
 }
