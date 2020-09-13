@@ -42,4 +42,4 @@ match example(9) {    //returns a DynResult
 \
 there are also some simple macros to help with lazy logging\
 log! will log an event to event.log\
-lodgged_panic! will log an event to event.log then panic
+logged_panic! will log an event to event.log then panic
