@@ -41,19 +41,17 @@ macro_rules! dynerr {
 #[macro_export]
 macro_rules! dynmatch {
     ($e:expr, $(type $ty:ty {$(arm $pat:pat => $result:expr),*, _ => $any:expr}),*, _ => $end:expr) => (
-        {
-            $(
-                if let Some(e) = $e.downcast_ref::<$ty>() {
-                    match e {
-                        $(
-                            $pat => {$result}
-                        )*
-                        _ => $any
-                    }
-                } else
-            )*
-            {$end}
-        }
+        $(
+            if let Some(e) = $e.downcast_ref::<$ty>() {
+                match e {
+                    $(
+                        $pat => {$result}
+                    )*
+                    _ => $any
+                }
+            } else
+        )*
+        {$end}
     );
 }
 
