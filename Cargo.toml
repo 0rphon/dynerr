@@ -1,5 +1,5 @@
 [package]
-name = "error_help"
+name = "dynerr"
 version = "0.1.0"
 authors = ["0rphon <59403052+0rphon@users.noreply.github.com>"]
 edition = "2018"
