@@ -1,6 +1,6 @@
 [package]
 name = "dynerr"
-description = "a tool for dynamic error handling"
+description = "Macros for dynamic error handling"
 readme = "README.md"
 repository = "https://github.com/0rphon/dynerr"
 license = "MIT"
