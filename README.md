@@ -1,3 +1,25 @@
 # dynerr
 some simple tools to help with dynamic error handling/logging\
-i got tired of copy pasting these from project to project so i made a crate
+i got tired of copy pasting these from project to project so i made a crate\
+\
+the main feature of this crate is the dynerr! macro. when used alongside the return type DynResult<T> it allows you to return multiple error types then match for them!\
+using dynerr, theres no need to wrap errors.\
+\
+Ok() and ? still work fine. as long as the type being returned implements std::error::Error then DynResult<T> should be able to handle it\
+to directly return a custom error its recommended to use the dynerr! macro instead of Err().\
+to match against the dynamic error contained in DynResult, use the dynmatch! macro.\
+macro usage looks similar to this
+```
+match example(9) {    //returns a DynResult
+    Ok(_) => Ok(()),
+    Err(e) => {
+        dyn_match!(e, //the DynError to match
+            type ExampleError1: ExampleError1::ThisError(2) => panic!("it was 2!"), //match arms to match against
+            type ExampleError2: ExampleError2::ThatError(8) => panic!("it was 8!"), //type T: pattern => {code}
+            type ExampleError2: ExampleError2::ThatError(9) => println!("it was 9!"),
+            default i => panic!("{}", i)    //the final arm if none of the above match
+        );
+        Ok(())
+    }
+}
+```
