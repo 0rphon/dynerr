@@ -20,10 +20,10 @@ fn example(x: u32) -> DynResult<u32> {
 ```
 \
 as you can see above, Ok() and ? still work fine.\
-dynerr works with any error type from any crate, as long as the type being returned implements std::error::Error then DynResult<T> should be able to handle it\
+dynerr works with any error type from any crate, as long as the type being returned implements std::error::Error then DynResult<T> should be able to handle it.\
 to directly return a custom error its recommended to use the dynerr! macro instead of Err().\
 to match against the dynamic error contained in DynResult, use the dynmatch! macro.\
-macro usage looks similar to this
+macro usage looks similar to this:
     
 ```
 match example(9) {    //returns a DynResult
@@ -40,6 +40,6 @@ match example(9) {    //returns a DynResult
 }
 ```
 \
-there are also some simple macros to help with lazy logging\
-log! will log an event to event.log\
-logged_panic! will log an event to event.log then panic
+there are also some simple macros to help with lazy logging.\
+log! will log an event to event.log.\
+logged_panic! will log an event to event.log then panic.
