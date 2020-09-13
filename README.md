@@ -5,7 +5,8 @@ i got tired of copy pasting these from project to project so i made a crate\
 the main features of this crate the dynerr! and dynmatch! macros. when used alongside the return type DynResult<T> it allows you to return multiple error types then match for them!\
 using dynerr, theres no need to wrap errors.\
 \
-Ok() and ? still work fine. as long as the type being returned implements std::error::Error then DynResult<T> should be able to handle it\
+Ok() and ? still work fine.\
+dynerr works with any error type from any crate, as long as the type being returned implements std::error::Error then DynResult<T> should be able to handle it\
 to directly return a custom error its recommended to use the dynerr! macro instead of Err().\
 to match against the dynamic error contained in DynResult, use the dynmatch! macro.\
 macro usage looks similar to this
