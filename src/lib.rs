@@ -96,15 +96,15 @@ macro_rules! logged_panic {
 /// ...
 /// ```
 #[macro_export]
-macro_rules! dyn_match {
-    ($e:expr, $(type $ty:ty: $pat:pat => $result:expr),+, default $d:ident => $default:expr) => (
+macro_rules! dynerr {
+    ($e:expr, $(type $ty:ty: $pat:pat => $result:expr),*, default $d:ident => $default:expr) => (
         {
             let mut matched = false;
             $(
                 if let Some(e) = $e.downcast_ref::<$ty>() {
                     if let $pat = e {$result; matched = true} //don't listen to the linter this is 100% reachable. #[allow(dead_code)] doesnt work on it either...weird bug
                 }
-            )+
+            )*
             if !matched {match $e {$d => $default}}
         }
     );
@@ -171,7 +171,7 @@ pub fn example() -> DynResult<()> {
     match example(9) {
         Ok(_) => Ok(()),
         Err(e) => {
-            dyn_match!(e, 
+            dynerr!(e, 
                 type ExampleError1: ExampleError1::ThisError(2) => panic!("it was 2!"),
                 type ExampleError2: ExampleError2::ThatError(8) => panic!("it was 8!"),
                 type ExampleError2: ExampleError2::ThatError(9) => println!("it was 9!"),
