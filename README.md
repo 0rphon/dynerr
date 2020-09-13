@@ -2,7 +2,7 @@
 some simple tools to help with dynamic error handling/logging\
 i got tired of copy pasting these from project to project so i made a crate\
 \
-the main feature of this crate is the dynerr! macro. when used alongside the return type DynResult<T> it allows you to return multiple error types then match for them!\
+the main features of this crate the dynerr! and dynmatch! macros. when used alongside the return type DynResult<T> it allows you to return multiple error types then match for them!\
 using dynerr, theres no need to wrap errors.\
 \
 Ok() and ? still work fine. as long as the type being returned implements std::error::Error then DynResult<T> should be able to handle it\
