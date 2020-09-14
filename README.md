@@ -49,5 +49,7 @@ macro usage looks similar to this:
 
 \
 there are also some simple macros to help with lazy logging.\
-log! will log an event to event.log.\
-logged_panic! will log an event to event.log then panic.
+log! will log an event to the supplied file. defaults to event.log if no log file supplied\
+logged_panic! will log an event to file then panic. defaults to event.log if no log file supplied\
+check! will call .unwrap_or_else(|e| logged_panic!(e)) on a result. same as above, defaults to event.log if no log file supplied\
+if the supplied file doesn't exist then these macros will attempt to create the file
