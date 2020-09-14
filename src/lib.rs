@@ -59,21 +59,22 @@ macro_rules! dynmatch {
     );
 }
 
-/// appends [event] to [log_file]
-/// creates file if it doesnt exist
+/// appends [event] to [log_file]\
+/// creates file if it doesnt exist\
+/// panics on failure to create or appending to file
 pub fn log<T: fmt::Display>(event: T, log_file: &str) -> T {
     let mut file = OpenOptions::new()
         .append(true)
         .create(true)
         .open(log_file)
-        .unwrap_or_else(|e| panic!("Error opening log during crash: {} (error passed to logger was: {})",e,event));
-    file.write_all(format!("{}",event.to_string()).as_bytes())
-        .unwrap_or_else(|e| panic!("Error writing to log during crash: {} (error passed to logger was: {})",e,event));
+        .unwrap_or_else(|e| panic!("Dynerr: Error opening log during crash: {} (error passed to logger was: {})",e,event));
+    file.write_all(format!("{}\n",event.to_string()).as_bytes())
+        .unwrap_or_else(|e| panic!("Dynerr: Error appending to log during crash: {} (error passed to logger was: {})",e,event));
     event
 }
 
 /// logs message to file\
-/// if no file supplied then defaults to "event.log"\
+/// if no file supplied then defaults to "event.log"
 /// 
 /// #Example
 /// ```ignore
@@ -91,7 +92,7 @@ macro_rules! log {
 }
 
 /// logs error to file then panic!\
-/// if no file supplied then defaults to "event.log"\
+/// if no file supplied then defaults to "event.log"
 /// 
 /// #Example
 /// ```ignore
@@ -111,7 +112,7 @@ macro_rules! logged_panic {
 
 
 /// Does .unwrap_or_else(|e| logged_panic!(e)) on result\
-/// if no file supplied then defaults to "event.log"\
+/// if no file supplied then defaults to "event.log"
 /// 
 /// #Example
 /// ```ignore
@@ -129,6 +130,7 @@ macro_rules! check {
 }
 
 
+///just some tests
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -164,10 +166,10 @@ mod tests {
     }
     impl error::Error for ExampleError2 {}
 
-    //THIS SECTION IS USING IT
+    ///THIS SECTION IS USING IT
     #[test]
     pub fn test() -> DynResult<()> {    
-        //shows error handling capabilities using DynError
+        ///shows error handling capabilities using DynError
         fn example(x: u32) -> DynResult<u32> {
             match x {
                 1      => Ok(x),                                //Ok
@@ -181,7 +183,7 @@ mod tests {
         }
 
         log!("this is a test", "test.log");
-        let _i = match example(8) {
+        let _i = match example(2) {
             Ok(i) => i,
             Err(e) => {
                 dynmatch!(e,                                                            //the dynamic error to be matched
@@ -199,7 +201,8 @@ mod tests {
             }
         };
         log!("do logged_panic! if error");
-        let _i = check!(example(9));
+        let _i = check!(example(11));
+        let _i = check!(example(9), "test.log");
         Ok(())
     }
 }
