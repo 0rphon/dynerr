@@ -44,12 +44,12 @@ macro_rules! dynerr {
 /// ```
 #[macro_export]
 macro_rules! dynmatch {
-    ($e:expr, $(type $ty:ty {$(arm $pat:pat => $result:expr),*, _ => $any:expr}),*, _ => $end:expr) => (
+    ($e:expr, $(type $ty:ty {$(arm $( $pattern:pat )|+ $( if $guard: expr )? => $result:expr),*, _ => $any:expr}),*, _ => $end:expr) => (
         $(
             if let Some(e) = $e.downcast_ref::<$ty>() {
                 match e {
                     $(
-                        $pat => {$result}
+                        $( $pattern )|+ $( if $guard )? => {$result}
                     )*
                     _ => $any
                 }
@@ -166,37 +166,43 @@ mod tests {
     }
     impl error::Error for ExampleError2 {}
 
+    ///shows error handling capabilities using DynError
+    fn example(x: u32) -> DynResult<u32> {
+        match x {
+            1      => Ok(x),                                //Ok
+            2..=4  => dynerr!(ExampleError1::ThisError(x)), //custom error
+            5..=10 => dynerr!(ExampleError2::ThatError(x)), //different custom error
+            _      => {
+                std::fs::File::open("none")?;               //an error not even defined by you!
+                Ok(x)
+            }
+        }
+    }
+
     ///THIS SECTION IS USING IT
     #[test]
     pub fn test() -> DynResult<()> {    
-        ///shows error handling capabilities using DynError
-        fn example(x: u32) -> DynResult<u32> {
-            match x {
-                1      => Ok(x),                                //Ok
-                2..=4  => dynerr!(ExampleError1::ThisError(x)), //custom error
-                5..=10 => dynerr!(ExampleError2::ThatError(x)), //different custom error
-                _      => {     
-                    std::env::current_dir()?;                   //an error not even defined by you!
-                    Ok(x)
-                }
-            }
-        }
+
 
         log!("this is a test", "test.log");
         let _i = match example(2) {
             Ok(i) => i,
             Err(e) => {
-                dynmatch!(e,                                                            //the dynamic error to be matched
-                    type ExampleError1 {                                                //an error group
-                        arm ExampleError1::ThisError(2) => logged_panic!("it was 2!"),  //arm [pattern] => {code}
-                        _ => panic!("{}",e)                                             //_ => {code}
+                dynmatch!(e,                                                                        //the dynamic error to be matched
+                    type ExampleError1 {                                                            //an error group
+                        arm ExampleError1::ThisError(2) => logged_panic!("it was 2!"),              //arm [pattern] => {code}
+                        _ => panic!("{}",e)                                                         //_ => {code}
                     },
                     type ExampleError2 {
                         arm ExampleError2::ThatError(8) => logged_panic!("it was 8!", "test.log"),
-                        arm ExampleError2::ThatError(9) => 9,
+                        arm ExampleError2::ThatError(9..=11) => 10,
                         _ => panic!("{}",e)
                     }, 
-                    _ => panic!("{}",e)                                                 //what to do if error group isn't found
+                    type std::io::Error {                                                           //an error type not defined by you
+                        arm i if i.kind() == std::io::ErrorKind::NotFound => panic!("not found"),   //a match guard included in the match
+                        _ => panic!("{}", e)
+                    },
+                    _ => panic!("{}",e)                                                             //what to do if error group isn't found
                 )
             }
         };
