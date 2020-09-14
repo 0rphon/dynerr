@@ -4,9 +4,9 @@ description = "Macros for dynamic error handling"
 readme = "README.md"
 repository = "https://github.com/0rphon/dynerr"
 license = "MIT"
-keywords = ["dynamic", "error", "handling", "log"]
+keywords = ["dynamic", "error", "handling", "log", "logging"]
 catagories = ["error-handling"]
-version = "0.1.11"
+version = "0.1.2"
 authors = ["0rphon <59403052+0rphon@users.noreply.github.com>"]
 edition = "2018"
 exclude = ["event.log"]
@@ -15,4 +15,3 @@ exclude = ["event.log"]
 
 
 [dependencies]
-

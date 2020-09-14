@@ -1,7 +1,6 @@
 use std::fmt;
-use std::fs::File;
+use std::fs::OpenOptions;
 use std::io::prelude::*;
-use std::path::Path;
 
 ///an alias for result that uses dynamic errors
 pub type DynResult<T> = std::result::Result<T, Box<dyn std::error::Error>>;
@@ -60,32 +59,17 @@ macro_rules! dynmatch {
     );
 }
 
-/// logs [event] to [log_file]
-pub fn log<T: fmt::Display>(event: T, log_file: &str) -> T{
-    fn log_event<T: fmt::Display>(event: T, log_file: &str) -> T {
-        let mut file = File::open(log_file)
-            .unwrap_or_else(|e| panic!("Error opening log during crash: {}\n crash: {}",e,event));
-    
-        let mut log = String::new();
-        file.read_to_string(&mut log)
-            .unwrap_or_else(|e| panic!("Error reading log during crash: {}\n crash: {}",e,event));
-        if log != "" { log = format!("{}\n{}", log, event.to_string())}
-        else {log = event.to_string()}
-    
-        let mut file = File::create(log_file)
-            .unwrap_or_else(|e| panic!("Error creating log during crash: {}\n crash: {}",e,event));
-        file.write_all(log.as_bytes())
-            .unwrap_or_else(|e| panic!("Error writing log during crash: {}\n crash: {}",e,event));
-    
-        event
-    }
-
-    if !Path::new(log_file).exists() {
-        File::create(log_file)
-            .unwrap_or_else(|e| panic!("Error creating log file during crash: {}\n crash: {}",e,event));
-        log_event("Log file created", log_file);
-    }
-    log_event(event, log_file)
+/// appends [event] to [log_file]
+/// creates file if it doesnt exist
+pub fn log<T: fmt::Display>(event: T, log_file: &str) -> T {
+    let mut file = OpenOptions::new()
+        .append(true)
+        .create(true)
+        .open(log_file)
+        .unwrap_or_else(|e| panic!("Error opening log during crash: {} (error passed to logger was: {})",e,event));
+    file.write_all(format!("{}",event.to_string()).as_bytes())
+        .unwrap_or_else(|e| panic!("Error writing to log during crash: {} (error passed to logger was: {})",e,event));
+    event
 }
 
 /// logs message to file\
@@ -120,8 +104,8 @@ macro_rules! logged_panic {
         panic!("{}",log!($e));
     };
 
-    ($e: expr, $file:expr) => {
-        panic!("{}",log!($e, $file));
+    ($e: expr, $log:expr) => {
+        panic!("{}",log!($e, $log));
     }
 }
 
