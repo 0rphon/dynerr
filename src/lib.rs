@@ -1,3 +1,8 @@
+use std::fmt;
+use std::fs::File;
+use std::io::prelude::*;
+use std::path::Path;
+
 ///an alias for result that uses dynamic errors
 pub type DynResult<T> = std::result::Result<T, Box<dyn std::error::Error>>;
 
@@ -55,65 +60,89 @@ macro_rules! dynmatch {
     );
 }
 
-/// logs message to event.log
+/// logs [event] to [log_file]
+pub fn log<T: fmt::Display>(event: T, log_file: &str) -> T{
+    fn log_event<T: fmt::Display>(event: T, log_file: &str) -> T {
+        let mut file = File::open(log_file)
+            .unwrap_or_else(|e| panic!("Error opening log during crash: {}\n crash: {}",e,event));
+    
+        let mut log = String::new();
+        file.read_to_string(&mut log)
+            .unwrap_or_else(|e| panic!("Error reading log during crash: {}\n crash: {}",e,event));
+        if log != "" { log = format!("{}\n{}", log, event.to_string())}
+        else {log = event.to_string()}
+    
+        let mut file = File::create(log_file)
+            .unwrap_or_else(|e| panic!("Error creating log during crash: {}\n crash: {}",e,event));
+        file.write_all(log.as_bytes())
+            .unwrap_or_else(|e| panic!("Error writing log during crash: {}\n crash: {}",e,event));
+    
+        event
+    }
+
+    if !Path::new(log_file).exists() {
+        File::create(log_file)
+            .unwrap_or_else(|e| panic!("Error creating log file during crash: {}\n crash: {}",e,event));
+        log_event("Log file created", log_file);
+    }
+    log_event(event, log_file)
+}
+
+/// logs message to file\
+/// if no file supplied then defaults to "event.log"\
 /// 
 /// #Example
 /// ```ignore
-/// example(9).unwrap_or_else(|e|log!(e))
-/// log!("i just logged an error!")
+/// example(9).unwrap_or_else(|e|log!(e), "error.log")
+/// log!("i just logged an error to error.log!")
 /// ```
 #[macro_export]
 macro_rules! log {
     ($event:expr) => {
-        {
-            use std::fmt;
-            use std::fs::File;
-            use std::io::prelude::*;
-            use std::path::Path;
-            const ERROR_LOG: &str = "event.log";
-            fn log_event<T: fmt::Display>(event: T) -> T {
-                let mut file = File::open(ERROR_LOG)
-                    .unwrap_or_else(|e| panic!("Error opening log during crash: {}\n crash: {}",e,event));
-            
-                let mut log = String::new();
-                file.read_to_string(&mut log)
-                    .unwrap_or_else(|e| panic!("Error reading log during crash: {}\n crash: {}",e,event));
-                if log != "" { log = format!("{}\n{}", log, event.to_string())}
-                else {log = event.to_string()}
-            
-                let mut file = File::create(ERROR_LOG)
-                    .unwrap_or_else(|e| panic!("Error creating log during crash: {}\n crash: {}",e,event));
-                file.write_all(log.as_bytes())
-                    .unwrap_or_else(|e| panic!("Error writing log during crash: {}\n crash: {}",e,event));
-            
-                event
-            }
-
-            if !Path::new(ERROR_LOG).exists() {
-                File::create(ERROR_LOG)
-                    .unwrap_or_else(|e| panic!("Error creating log file during crash: {}\n crash: {}",e,$event));
-                log_event(format!("Log file created"));
-            }
-            log_event($event)
-        }
+        $crate::log($event, "event.log")
+    };
+    ($event:expr, $log:expr) => {
+        $crate::log($event, $log)
     };
 }
 
-/// logs error to event.log then panic!\
+/// logs error to file then panic!\
+/// if no file supplied then defaults to "event.log"\
 /// 
 /// #Example
 /// ```ignore
-/// example(9).unwrap_or_else(|e|logged_panic!(e))
+/// example(9).unwrap_or_else(|e|logged_panic!(e));
+/// example(9).unwrap_or_else(|e|logged_panic!(e), "mylog.log");
 /// ```
 #[macro_export]
 macro_rules! logged_panic {
     ($e: expr) => {
-        {
-            panic!("{}",log!($e));
-        }
+        panic!("{}",log!($e));
     };
+
+    ($e: expr, $file:expr) => {
+        panic!("{}",log!($e, $file));
+    }
 }
 
+
+/// Does .unwrap_or_else(|e| logged_panic!(e)) on result\
+/// if no file supplied then defaults to "event.log"\
+/// 
+/// #Example
+/// ```ignore
+/// let _i = check!(example(9);
+/// check!(example(9, "error.log");
+/// ```
+#[macro_export]
+macro_rules! check {
+    ($x:expr) => {
+        $x.unwrap_or_else(|e| logged_panic!(e))
+    };
+    ($x:expr, $log:expr) => {
+        $x.unwrap_or_else(|e| logged_panic!(e, $log))
+    };
+}
 
 
 #[cfg(test)]
@@ -167,24 +196,26 @@ mod tests {
             }
         }
 
-        log!("this is a test");
-        let _i = match example(3) {
+        log!("this is a test", "test.log");
+        let _i = match example(8) {
             Ok(i) => i,
             Err(e) => {
-                dynmatch!(e,                                                    //the dynamic error to be matched
-                    type ExampleError1 {                                        //an error group
-                        arm ExampleError1::ThisError(2) => panic!("it was 2!"), //arm [pattern] => {code}
-                        _ => panic!("{}",e)                                     //_ => {code}
+                dynmatch!(e,                                                            //the dynamic error to be matched
+                    type ExampleError1 {                                                //an error group
+                        arm ExampleError1::ThisError(2) => logged_panic!("it was 2!"),  //arm [pattern] => {code}
+                        _ => panic!("{}",e)                                             //_ => {code}
                     },
                     type ExampleError2 {
-                        arm ExampleError2::ThatError(8) => panic!("it was 8!"),
+                        arm ExampleError2::ThatError(8) => logged_panic!("it was 8!", "test.log"),
                         arm ExampleError2::ThatError(9) => 9,
                         _ => panic!("{}",e)
                     }, 
-                    _ => panic!("{}",e)                                         //what to do if error group isn't found
+                    _ => panic!("{}",e)                                                 //what to do if error group isn't found
                 )
             }
         };
+        log!("do logged_panic! if error");
+        let _i = check!(example(9));
         Ok(())
     }
 }
