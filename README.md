@@ -102,7 +102,7 @@ fn example(x: u32) -> DynResult<u32> {
         2..=4  => dynerr!(ExampleError1::ThisError(x)), //custom error
         5..=10 => dynerr!(ExampleError2::ThatError(x)), //different custom error
         _      => {
-            std::env::current_dir()?;                   //an error not even defined by you!
+            std::fs::File::open("none")?;               //an error not even defined by you!
             Ok(x)
         }
     }
