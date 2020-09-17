@@ -20,10 +20,11 @@ fn example(x: u32) -> DynResult<u32> {                  //returns a dynamic resu
 ```
 
 \
-`DynResult<T>` is just an alias for `Result<T, Box<dyn error::Error>>` so anything that works on a `Result<T>` will still work on a `DynResult<T>`.\
+`DynError` is an alias for `Box<dyn error::Error>`. Any error that implements `error::Error` can be turned into a `DynError`.\
+`DynResult<T>` is just an alias for `Result<T, DynError>` so anything that works on a `Result<T>` will still work on a `DynResult<T>`.\
 Dynerr works with any error type from any crate, as long as the type being returned implements `std::error::Error` then `DynResult<T>` should be able to handle it.\
 To directly return a custom error its recommended to use the `dynerr!` macro instead of `Err()`.\
-To match against the dynamic error contained in `DynResult<T>`, use the `dynmatch!` macro.\
+To match against the DynError contained in `DynResult<T>`, use the `dynmatch!` macro.\
 `dynmatch!` usage looks similar to this:
 
 ```rust
@@ -113,7 +114,7 @@ fn main() -> DynResult<()> {
     let _i = match example(2) {
         Ok(i) => i,
         Err(e) => {
-            dynmatch!(e,                                                                        //the dynamic error to be matched
+            dynmatch!(e,                                                                        //the DynError to be matched
                 type ExampleError1 {                                                            //an error type
                     arm ExampleError1::ThisError(2) => logged_panic!("it was 2!"),              //arm [pattern] => {code}
                     _ => panic!("{}",e)                                                         //_ => {code}

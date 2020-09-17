@@ -10,14 +10,16 @@ use std::fmt;
 use std::fs::OpenOptions;
 use std::io::prelude::*;
 
-/// An alias for result that uses dynamic errors
+///type alias for an error returned by `dynerr!` and `DynResult<T>`
+pub type DynError = Box<dyn std::error::Error>;
+
+/// An alias for result that uses DynError
 /// 
 ///# Example
 /// ```rust
 ///# use dynerr::*;
 ///# use std::{fmt, error};
 ///# 
-///# //THIS SECTION IS CREATING THE FIRST CUSTOM ERROR
 ///# ///a custom error type
 ///# #[derive(Debug)]
 ///# enum ExampleError1 {
@@ -47,9 +49,10 @@ use std::io::prelude::*;
 ///#     try_something(11);
 ///# }
 /// ```
-pub type DynResult<T> = std::result::Result<T, Box<dyn std::error::Error>>;
+pub type DynResult<T> = std::result::Result<T, DynError>;
 
-/// A macro for returning custom errors as dynamic errors.
+
+/// A macro for returning custom errors as DynError.
 /// 
 ///# Example
 /// 
@@ -174,7 +177,7 @@ macro_rules! dynerr {
 /// let _i = match example(20) {
 ///     Ok(i) => i,
 ///     Err(e) => {
-///         dynmatch!(e,                                                                        //the dynamic error to be matched
+///         dynmatch!(e,                                                                        //the DynError to be matched
 ///             type ExampleError1 {                                                            //an error type
 ///                 arm ExampleError1::ThisError(2) => logged_panic!("it was 2!"),              //arm [pattern] => {code}
 ///                 _ => panic!("{}",e)                                                         //_ => {code}
@@ -364,7 +367,7 @@ mod tests {
         let _i = match example(20) {
             Ok(i) => i,
             Err(e) => {
-                dynmatch!(e,                                                                        //the dynamic error to be matched
+                dynmatch!(e,                                                                        //the DynError to be matched
                     type ExampleError1 {                                                            //an error group
                         arm ExampleError1::ThisError(2) => logged_panic!("it was 2!"),              //arm [pattern] => {code}
                         _ => panic!("{}",e)                                                         //_ => {code}
