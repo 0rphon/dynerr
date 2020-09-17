@@ -10,9 +10,6 @@ use std::fmt;
 use std::fs::OpenOptions;
 use std::io::prelude::*;
 
-///type alias for an error returned by `dynerr!` and `DynResult<T>`
-pub type DynError = Box<dyn std::error::Error>;
-
 /// An alias for result that uses dynamic errors
 /// 
 ///# Example
@@ -20,6 +17,7 @@ pub type DynError = Box<dyn std::error::Error>;
 ///# use dynerr::*;
 ///# use std::{fmt, error};
 ///# 
+///# //THIS SECTION IS CREATING THE FIRST CUSTOM ERROR
 ///# ///a custom error type
 ///# #[derive(Debug)]
 ///# enum ExampleError1 {
@@ -49,7 +47,7 @@ pub type DynError = Box<dyn std::error::Error>;
 ///#     try_something(11);
 ///# }
 /// ```
-pub type DynResult<T> = std::result::Result<T, DynError>;
+pub type DynResult<T> = std::result::Result<T, Box<dyn std::error::Error>>;
 
 /// A macro for returning custom errors as dynamic errors.
 /// 
