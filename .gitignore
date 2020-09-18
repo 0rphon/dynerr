@@ -1,6 +1,3 @@
 /target
 Cargo.lock
-event.log
-test.log
-debug.log
-my.log
+*.log
