@@ -53,7 +53,8 @@ Aside from its main features, dynerr also has some simple macros to help with la
 `logged_panic!` will log an event to file then panic. Defaults to event.log if no log file supplied.\
 `check!` will call `.unwrap_or_else(|e| logged_panic!(e))` on a result. Defaults to event.log if no log file supplied.\
 If the supplied file doesn't exist then these macros will attempt to create the file.\
-These macros all rely on the `log` function. `log` is capable of panicking but shouldn't ever need to under normal circumstances.
+To delete a log file use the `clean!` macro.\
+These macros all rely on either the `log` or `clean_log` functions. these functions are capable of panicking but shouldn't ever need to under normal circumstances.
 \
 \
 A complete example:

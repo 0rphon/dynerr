@@ -7,7 +7,8 @@
 
 
 use std::fmt;
-use std::fs::OpenOptions;
+use std::path::Path;
+use std::fs::{OpenOptions, remove_file};
 use std::io::prelude::*;
 
 ///type alias for an error returned by `dynerr!` and `DynResult<T>`
@@ -214,25 +215,24 @@ macro_rules! dynmatch {
     );
 }
 
+///deletes the supplied file
 pub fn clean_log(log_file: &str) {
-    let mut file = OpenOptions::new()
-        .write(true)
-        .create(true)
-        .open(log_file)
-        .unwrap_or_else(|e| panic!("Dynerr: Error opening log for clean: {}",e));
-    file.write("".as_bytes()).unwrap_or_else(|e| panic!("Dynerr: Error cleaning log {})",e));
+    if Path::new(log_file).exists() {
+        remove_file(log_file).unwrap_or_else(|e| panic!("Dynerr: Error cleaning file: {}", e))
+    }
 }
 
-/// clears the supplied log file.
+/// deletes the supplied log file.
 /// 
-/// if no file supplied defaults to "event.log".\
-/// creates the file if it doesnt exist.
+/// if no file supplied defaults to "event.log".
 /// 
 /// #Example
 /// ```
 ///# use dynerr::*;
 ///# fn main() {
+/// log!("hello world", "my.log");
 /// clean!("my.log");
+/// log!("i just cleaned my.log");
 /// clean!();
 ///# }
 /// ```
