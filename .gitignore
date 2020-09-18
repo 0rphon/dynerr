@@ -2,3 +2,4 @@
 Cargo.lock
 event.log
 test.log
+debug.log

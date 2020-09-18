@@ -214,10 +214,39 @@ macro_rules! dynmatch {
     );
 }
 
+pub fn clean_log(log_file: &str) {
+    let mut file = OpenOptions::new()
+        .write(true)
+        .create(true)
+        .open(log_file)
+        .unwrap_or_else(|e| panic!("Dynerr: Error opening log for clean: {}",e));
+    file.write("".as_bytes()).unwrap_or_else(|e| panic!("Dynerr: Error cleaning log {})",e));
+}
+
+/// clears the supplied log file.
+/// 
+/// if no file supplied defaults to "event.log".\
+/// creates the file if it doesnt exist.
+/// 
+/// #Example
+/// ```
+/// clean!("my.log")
+/// clean!()
+/// ```
+#[macro_export]
+macro_rules! clean {
+    ($event:expr) => {
+        $crate::clean_log($event, "event.log")
+    };
+    ($event:expr, $log:expr) => {
+        $crate::clean_log($event, $log)
+    };
+}
+
 /// Appends [event] to [log_file].
 /// 
-/// creates file if it doesnt exist.\
-/// panics on failure to create or appending to file\
+/// creates the file if it doesnt exist.\
+/// panics on failure to create or appending to file.\
 /// not meant to be used on its own. use logging macros instead
 pub fn log<T: fmt::Display>(event: T, log_file: &str) -> T {
     let mut file = OpenOptions::new()
@@ -232,7 +261,9 @@ pub fn log<T: fmt::Display>(event: T, log_file: &str) -> T {
 
 /// Appends [event] to [file].
 /// 
-/// If no file supplied then defaults to "event.log"
+/// If no file supplied then defaults to "event.log".\
+/// creates the file if it doesnt exist.
+///
 /// 
 ///# Example
 /// 
@@ -255,7 +286,8 @@ macro_rules! log {
 
 /// Appends [event] to [file] then panics.
 /// 
-/// If no file supplied then defaults to "event.log"
+/// If no file supplied then defaults to "event.log".\
+/// creates the file if it doesnt exist.
 /// 
 ///# Example
 /// 
@@ -282,7 +314,8 @@ macro_rules! logged_panic {
 
 /// Shortcut for .unwrap_or_else(|e| logged_panic!(e)) for DynResult.
 /// 
-/// If no file supplied then defaults to "event.log"
+/// If no file supplied then defaults to "event.log".\
+/// creates the file if it doesnt exist.
 /// 
 ///# Example
 /// 
