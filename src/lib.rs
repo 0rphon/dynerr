@@ -230,16 +230,19 @@ pub fn clean_log(log_file: &str) {
 /// 
 /// #Example
 /// ```
-/// clean!("my.log")
-/// clean!()
+///# use dynerr::*;
+///# fn main() {
+/// clean!("my.log");
+/// clean!();
+///# }
 /// ```
 #[macro_export]
 macro_rules! clean {
-    ($event:expr) => {
-        $crate::clean_log($event, "event.log")
+    () => {
+        $crate::clean_log("event.log")
     };
-    ($event:expr, $log:expr) => {
-        $crate::clean_log($event, $log)
+    ($log:expr) => {
+        $crate::clean_log($log)
     };
 }
 
