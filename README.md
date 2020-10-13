@@ -2,6 +2,7 @@
 
 Some macros to help with dynamic error handling/logging.\
 The goal of this crate is to unify all error types without compromising type safety.\
+The crates.io page can be found [here](https://crates.io/crates/dynerr)\
 \
 The main features of this crate are the `dynerr!` and `dynmatch!` macros. when used alongside the return type `DynResult<T>`, they allows you to return multiple error types from a function then easily match for them during your error handling. Using dynerr, theres no need to ever wrap errors.
 
